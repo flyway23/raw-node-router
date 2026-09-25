@@ -35,6 +35,8 @@ function readBody(req) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const path = url.pathname;
+  const segments = path.split("/").filter(Boolean);
+  console.log(segments);
 
   if (path === "/") {
     return send(res, 200, "Home");
@@ -55,19 +57,20 @@ const server = http.createServer(async (req, res) => {
     res.setHeader("Allow", "GET");
     return send(res, 405, "not the right method");
   }
-
+  //to get the query params
   if (path === "/greet") {
     const name = url.searchParams.get("name") || "stranger";
     return send(res, 200, `Hello, ${name}`);
   }
 
+  //this one serves diff requests at same endpoint
   if (path === "/users") {
     if (req.method === "GET") {
       return send(res, 200, "u shall have it ");
     }
 
     if (req.method === "POST") {
-      const raw = await readBody(req);
+      const raw = await readBody(req); //because data arrives in chunks
       let data;
       try {
         data = JSON.parse(raw);
@@ -76,11 +79,11 @@ const server = http.createServer(async (req, res) => {
       }
       return sendJson(res, 201, { message: `User created: ${data.name}` });
     }
-    res.setHeader("Allow", "GET POST");
+    res.setHeader("Allow", "GET POST"); // tell the client what is allowed
     return send(res, 405, "send correct method");
   }
 
-  send(res, 404, `Not found: ${path}`);
+  send(res, 404, `Not found: ${path}`); //friendly 404 serve in case no route is found
 });
 
 server.listen(3000, () => {
